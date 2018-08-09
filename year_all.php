@@ -3,7 +3,7 @@
  * year_all.php
  * Interface d'accueil avec affichage par mois sur plusieurs mois des réservation de toutes les ressources d'un site
  * Ce script fait partie de l'application GRR
- * Dernière modification : $Date: 2018-07-07 13:00 $
+ * Dernière modification : $Date: 2018-07-26 14:30 $
  * @author    Yan Naessens, Laurent Delineau 
  * @copyright Copyright 2003-2018 Yan Naessens, Laurent Delineau
  * @link      http://www.gnu.org/licenses/licenses.html
@@ -153,7 +153,28 @@ if (Settings::get("verif_reservation_auto") == 0)
 	verify_retard_reservation();
 }
 //print the page header
-print_header($day, $from_month, $from_year, $type_session);
+// print_header($day, $from_month, $from_year, $type_session);
+
+// définition de variables globales
+global $racine, $racineAd, $desactive_VerifNomPrenomUser;
+// autres initialisations
+if (@file_exists('./admin_access_area.php')){
+    $adm = 1;
+    $racine = "../";
+    $racineAd = "./";
+}else{
+    $adm = 0;
+    $racine = "./";
+    $racineAd = "./admin/";
+}
+// pour le traitement des modules
+include $racine."/include/hook.class.php";
+
+if (!($desactive_VerifNomPrenomUser))
+    $desactive_VerifNomPrenomUser = 'n';
+// On vérifie que les noms et prénoms ne sont pas vides
+VerifNomPrenomUser($type_session);
+
 //Month view start time. This ignores morningstarts/eveningends because it
 //doesn't make sense to not show all entries for the day, and it messes
 //things up when entries cross midnight.
@@ -162,16 +183,31 @@ $month_end = mktime(23, 59, 59, $to_month, 1, $to_year);
 $days_in_to_month = date("t", $month_end);
 $month_end = mktime(23,59,59,$to_month,$days_in_to_month,$to_year);
 
+// début du code html
+echo '<!DOCTYPE html>'.PHP_EOL;
+echo '<html lang="fr">'.PHP_EOL;
+// section <head>
+if ($type_session == "with_session")
+    echo pageHead2(Settings::get("company"),"with_session");
+else
+    echo pageHead2(Settings::get("company"),"no_session");
+// section <body>
+echo "<body>";
+// Menu du haut = section <header>
+echo "<header>";
+pageHeader2('', '', '', $type_session);
+echo "</header>";
+echo "<section>";
 // Si format imprimable ($_GET['pview'] = 1), on n'affiche pas cette partie
 if ($_GET['pview'] != 1)
 {
     echo "<div class='row'>";
-        echo "\n<div class=\"col-lg-3 col-md-4 col-xs-12\">\n".PHP_EOL; // lien de retour
+        echo "\n<div class=\"col-lg-2 col-md-3 col-xs-12\">\n".PHP_EOL; // lien de retour
             echo '&nbsp; <a title="'.htmlspecialchars(get_vocab('back')).'" href="'.$back.'">'.htmlspecialchars(get_vocab('back')).'</a>';
         echo "</div>";
         echo "<form method=\"get\" action=\"year_all.php\">";
-            echo "\n<div class=\"col-lg-3 col-md-4 col-xs-12\">\n".PHP_EOL; // choix des dates 
-            echo "<table border=\"0\">\n";
+            echo "\n<div class=\"col-lg-4 col-md-6 col-xs-12\">\n".PHP_EOL; // choix des dates 
+            echo "<table>\n";
             echo "<tr><td>".get_vocab("report_start").get_vocab("deux_points")."&nbsp</td>";
             echo "<td>";
             echo genDateSelector("from_", "", $from_month, $from_year,"");
@@ -247,7 +283,7 @@ else
         $nom_site = grr_sql_query1("SELECT sitename FROM ".TABLE_PREFIX."_site WHERE id=".$site);
     }
     else $nom_site = get_vocab('any_area');
-    echo '<div class="titre_planning">'.ucfirst($nom_site)." - ".get_vocab("all_areas").'</div>';
+    echo '<div class="titre_planning"><h4>'.ucfirst($nom_site)." - ".get_vocab("all_areas").'</h4></div>';
     // Boucle sur les mois
     $month_indice =  $month_start;
     while ($month_indice < $month_end)
@@ -271,14 +307,17 @@ else
                 $eveningends_minutes = count($periods_name) - 1;
             }
             $this_area_name = grr_sql_query1("SELECT area_name FROM ".TABLE_PREFIX."_area WHERE id=$area");
-            echo "<div class=\"titre_planning\">".ucfirst($this_area_name)." </div>\n";
+            // echo "<div class=\"titre_planning\">".ucfirst($this_area_name)." </div>\n";
             // affichage des jours du mois courant
             // echo "<table border=\"2\">\n";
-            echo "<table class='table-bordered'>\n";
+            echo "<table class='mois table-bordered'>\n";
+            echo "<caption>";
+            echo "<h4>".ucfirst($this_area_name)."</h4>";
+            echo "</caption>";
             // Début affichage de la première ligne
             echo "<tr>";
             tdcell("cell_hours");
-            echo " </td>\n";
+            echo get_vocab('rooms')." </td>\n";
             $t2 = mktime(0, 0, 0, $month_num, 1, $year_num);
             for ($k = 0; $k < $days_in_month; $k++)
             {
@@ -292,8 +331,8 @@ else
                 $t2 = mktime(0,0,0,$cmonth,$cday+1,$cyear);
                 if ($display_day[$cweek] == 1)
                 {
-                    if (isHoliday($temp)) {echo tdcell("cell_hours_ferie");}
-                    elseif (isSchoolHoliday($temp)) {echo tdcell("cell_hours_vacance");}
+                    if (isHoliday($temp)) {echo tdcell("cell_hours ferie");}
+                    elseif (isSchoolHoliday($temp)) {echo tdcell("cell_hours vacance");}
                     else {echo tdcell("cell_hours");}
                     echo "<div><a title=\"".htmlspecialchars(get_vocab("see_all_the_rooms_for_the_day"))."\"   href=\"day.php?year=$year_num&amp;month=$month_num&amp;day=$cday&amp;area=$area\">$name_day</a>";
                     if (Settings::get("jours_cycles_actif") == "Oui" && intval($jour_cycle)>-1)
@@ -478,7 +517,7 @@ else
                             $t2 = mktime(0,0,0,$month_num,$cday+1,$year_num);
                             if ($display_day[$cweek] == 1) // Début condition "on n'affiche pas tous les jours de la semaine"
                             {   
-                                echo "<td valign=\"top\" class=\"cell_month\"> \n";
+                                echo "<td> \n";
                                 if (est_hors_reservation(mktime(0,0,0,$month_num,$cday,$year_num),$area))
                                 {
                                     echo "<div class=\"empty_cell\">";
@@ -501,7 +540,7 @@ else
                                         {
                                             if ($d[$cday][$cmonth][$cyear]["room"][$i] == $room_name) // test peu fiable car c'est l'id qui est unique YN le 26/02/2018
                                             {
-                                                echo "\n<table class='table-bordered' ><tr>\n";
+                                                echo "\n<table class='table-header table-bordered' ><tr>\n";
                                                 tdcell($d[$cday][$cmonth][$cyear]["color"][$i]);
                                                 if ($d[$cday][$cmonth][$cyear]["res"][$i] != '-')
                                                     echo " <img src=\"img_grr/buzy.png\" alt=\"".get_vocab("ressource actuellement empruntee")."\" title=\"".get_vocab("ressource actuellement empruntee")."\" width=\"20\" height=\"20\" class=\"image\" /> \n";
@@ -514,10 +553,10 @@ else
                                                 
                                                 if ($acces_fiche_reservation)
                                                     echo "<a title=\"".htmlspecialchars($d[$cday][$cmonth][$cyear]["data"][$i])."\" href=\"view_entry.php?id=" . $d[$cday][$cmonth][$cyear]["id"][$i]."&amp;page=month\" class='lienCellule'>"
-                                                .$d[$cday][$cmonth][$cyear]["who1"][$i]{0}
+                                                .substr($d[$cday][$cmonth][$cyear]["who1"][$i],0,4)
                                                 . "</a>";
                                                 else
-                                                    echo $d[$cday][$cmonth][$cyear]["who1"][$i]{0};
+                                                    echo substr($d[$cday][$cmonth][$cyear]["who1"][$i],0,4);
                                                 echo "\n</td></tr></table>\n";
                                             }
                                         }
@@ -542,5 +581,14 @@ show_colour_key($area);
 affiche_pop_up(get_vocab("message_records"),"user");
 include "include/trailer.inc.php";
 echo "</div>";
+echo  "<div id=\"popup_name\" class=\"popup_block\" ></div>";
+if ($_GET['pview'] != 1)
+{
+	echo "<div id=\"toTop\"> ^ Haut de la page";
+    bouton_retour_haut ();
+    echo " </div>";
+}
+echo " </div>";
+echo "</section>";
 echo "</body></html>";
 ?>

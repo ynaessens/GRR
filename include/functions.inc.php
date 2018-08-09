@@ -2,7 +2,7 @@
 /**
  * include/functions.inc.php
  * fichier Bibliothèque de fonctions de GRR
- * Dernière modification : $Date: 2018-06-25 12:00$
+ * Dernière modification : $Date: 2018-07-22 15:00$
  * @author    JeromeB & Laurent Delineau & Marc-Henri PAMISEUX & Yan Naessens
  * @copyright Copyright 2003-2018 Team DEVOME - JeromeB
  * @link      http://www.gnu.org/licenses/licenses.html
@@ -1821,7 +1821,7 @@ function tdcell($colclass, $width = '')
 		echo '<td style="background-color:'.$couleurhexa.';" '.$temp.'>'.PHP_EOL;
 	}
 	else
-		echo '<td class="'.$colclass.' '.$temp.'">'.PHP_EOL;
+		echo '<td class="'.$colclass.'" '.$temp.'>'.PHP_EOL;
 }
 
 function tdcell_rowspan($colclass, $step)
@@ -1842,7 +1842,7 @@ function tdcell_rowspan($colclass, $step)
 //Display the entry-type color key. This has up to 2 rows, up to 10 columns.
 function show_colour_key($area_id)
 {
-	echo '<table class="legende"><caption class="titre">'.get_vocab("show_color_key").'</caption>'.PHP_EOL;
+	echo '<table class="legende"><caption>'.get_vocab("show_color_key").'</caption>'.PHP_EOL;
 	$sql = "SELECT DISTINCT t.id, t.type_name, t.type_letter, t.order_display FROM `".TABLE_PREFIX."_type_area` t
 	LEFT JOIN `".TABLE_PREFIX."_j_type_area` j on j.id_type=t.id
 	WHERE (j.id_area  IS NULL or j.id_area != '".$area_id."')ORDER BY t.order_display";
@@ -1878,7 +1878,7 @@ function show_colour_key($area_id)
 //Display the entry-type color keys. This has up to 2 rows, up to 10 columns.
 function show_colour_keys()
 {
-	echo '<table class="legende"><caption class="titre">'.get_vocab("show_color_key").'</caption>'.PHP_EOL;
+	echo '<table class="legende"><caption>'.get_vocab("show_color_key").'</caption>'.PHP_EOL;
 	$sql = "SELECT DISTINCT id, type_name, type_letter, order_display FROM `".TABLE_PREFIX."_type_area` ";
 	$res = grr_sql_query($sql);
 	if ($res)
@@ -4648,6 +4648,72 @@ $(\'.clockpicker\').clockpicker({
 });
 </script>';
 }
+function jQuery_TimePicker2($typeTime, $start_hour, $start_min,$dureepardefaultsec)
+{
+	if (isset ($_GET['id']))
+	{
+		if (isset($start_hour) && isset($start_min))
+		{
+			$hour = $start_hour;
+			$minute = $start_min;
+		}
+		else
+		{
+			$hour = date("h");
+			$minute = date("m");
+		}
+	}
+	else
+	{
+		if (isset ($_GET['hour']))
+			$hour = $_GET['hour'];
+		else
+			$hour = date("h");
+		if (isset ($_GET['minute']))
+			$minute = $_GET['minute'];
+		else
+			$minute = date("m");
+			
+		if ($typeTime == 'end_')
+        {
+            $dureepardefautmin = $dureepardefaultsec/60;
+            if ($dureepardefautmin == 60){
+                $ajout = 1;
+                $hour = $_GET['hour'] + $ajout;
+                $minute ="00";
+            }
+            if ($dureepardefautmin < 60){
+                $hour = $_GET['hour'];
+                $minute =$dureepardefautmin;
+            }
+            if ($dureepardefautmin > 60)
+            {
+                $dureepardefautheure = $dureepardefautmin/60;
+                if (($dureepardefautheure % 60)!=0)
+                {
+                    $hour = $_GET['hour']+ $dureepardefautheure;
+                    if ($_GET['minute'] == 30){$minute =30;}
+                    else{$minute = "00";}
+                }
+            }
+        }
+	}
+	if ($minute == 0)
+		$minute = '00';
+	// MAJ
+	echo '<div class="input-group">
+	<input id="'.$typeTime.'" name="' .$typeTime. '" type="text" class="time" >
+	</div>';
+    echo '<script type="text/javascript">
+        $(\'#'.$typeTime.'\').timepicker({
+            \'step\': '.($dureepardefaultsec/60).',
+            \'scrollDefault\': \''.$hour.':'.$minute.'\',
+            \'timeFormat\': "H:i",
+            \'forceRoundTime\': true,
+        });
+        </script>';
+}
+
 function spinner ($duration)
 {
 	echo "<input class=\"form-control\" name=\"duration\" value=\"" .$duration. "\" id=\"spinner\" />";
@@ -4972,8 +5038,12 @@ function pageHead2($title, $page = "with_session")
 		if (isset($_SESSION['default_style']))
 			$sheetcss = 'themes/'.$_SESSION['default_style'].'/css';
 
+		else {
+            if (Settings::get("default_css"))
+			$sheetcss = 'themes/'.Settings::get("default_css").'/css'; // thème global par défaut
 		else
-			$sheetcss = 'themes/default/css'; // utilise le thème par défaut s'il n'a pas été défini... à voir YN le 11/04/2018
+			$sheetcss = 'themes/default/css'; // utilise le thème par défaut s'il n'a pas été défini
+        }
 		if (isset($_GET['default_language']))
 		{
 			$_SESSION['default_language'] = $_GET['default_language'];
@@ -5016,21 +5086,23 @@ function pageHead2($title, $page = "with_session")
 	$a .= '<title>'.$title.'</title>'.PHP_EOL;
 	$a .= '<link rel="shortcut icon" href="./favicon.ico" />'.PHP_EOL;
 
-	if (@file_exists('admin_accueil.php') || @file_exists('install_mysql.php')){ // Si on est dans l'administration
+	if (@file_exists('admin_accueil.php') || @file_exists('install_mysql.php')){ // Si on est dans l'administration ou en initialisation
 
 		//$a .= '<link rel="stylesheet" type="text/css" href="../'.$sheetcss.'/style.css" />'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="../'.$sheetcss.'/bootstrap.min.css" />'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="../'.$sheetcss.'/mod_bootstrap.css" />'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="../bootstrap/css/bootstrap.min.css" />'.PHP_EOL;
+		//$a .= '<link rel="stylesheet" type="text/css" href="../'.$sheetcss.'/mod_bootstrap.css" />'.PHP_EOL;
 		$a .= '<link rel="stylesheet" type="text/css" href="../include/admin_grr.css" />'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="../themes/default/css/select2.css" />'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="../themes/default/css/select2-bootstrap.css" />'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="../bootstrap/css/select2.css" />'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="../bootstrap/css/select2-bootstrap.css" />'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="../bootstrap/css/jquery-ui.css" />'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="../bootstrap/css/jquery-ui-timepicker-addon.css" >'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="../bootstrap/css/bootstrap-multiselect.css">'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="../bootstrap/css/bootstrap-clockpicker.min.css">'.PHP_EOL;
+        // $a .= '<link rel="stylesheet" type="text/css" href="../'.$sheetcss.'/mod_bootstrap.css" />'.PHP_EOL;
+        $a .= '<link rel="stylesheet" type="text/css" href="../themes/default/css/style.css" />'.PHP_EOL; // le style par défaut
+        $a .= '<link rel="stylesheet" type="text/css" href="../'.$sheetcss.'/style.css" />'.PHP_EOL; // le style personnalisé
 		if ((isset($_GET['pview'])) && ($_GET['pview'] == 1))
 			$a .= '<link rel="stylesheet" type="text/css" href="../themes/print/css/style.css" />'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="../themes/default/css/jquery-ui.css" />'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="../themes/default/css/jquery-ui-timepicker-addon.css" >'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="../themes/default/css/bootstrap-multiselect.css">'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="../themes/default/css/bootstrap-clockpicker.min.css">'.PHP_EOL;
-        $a .= '<link rel="stylesheet" type="text/css" href="../'.$sheetcss.'/style.css" />'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="../js/jquery-2.1.1.min.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="../js/jquery-ui.min.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="../js/jquery.validate.js"></script>'.PHP_EOL;
@@ -5054,31 +5126,34 @@ function pageHead2($title, $page = "with_session")
 			$a .= '<script type="text/javascript" src="../js/'.$clock_file.'"></script>'.PHP_EOL;
 		if (substr(phpversion(), 0, 1) == 3)
 			$a .= get_vocab('not_php3');
-	
-	} else{
-	
-		//$a .= '<link rel="stylesheet" type="text/css" href="'.$sheetcss.'/style.css" />'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="'.$sheetcss.'/bootstrap.min.css" />'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="'.$sheetcss.'/mod_bootstrap.css" />'.PHP_EOL;
-	    if (isset($use_admin))
-			$a .= '<link rel="stylesheet" type="text/css" href="include/admin_grr.css" />'.PHP_EOL;
-		if (isset($use_select2))
+	} 
+    else
+    {	//$a .= '<link rel="stylesheet" type="text/css" href="'.$sheetcss.'/style.css" />'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css" />'.PHP_EOL;
+		// $a .= '<link rel="stylesheet" type="text/css" href="'.$sheetcss.'/mod_bootstrap.css" />'.PHP_EOL;
+	    if (isset($use_select2))
 		{
-			$a .= '<link rel="stylesheet" type="text/css" href="themes/default/css/select2.css" />'.PHP_EOL;
-			$a .= '<link rel="stylesheet" type="text/css" href="themes/default/css/select2-bootstrap.css" />'.PHP_EOL;
-			$a .= '<link rel="stylesheet" type="text/css" href="themes/default/css/bootstrap-multiselect.css">'.PHP_EOL;
-			$a .= '<link rel="stylesheet" type="text/css" href="themes/default/css/bootstrap-clockpicker.min.css">'.PHP_EOL;
+			$a .= '<link rel="stylesheet" type="text/css" href="bootstrap/css/select2.css" />'.PHP_EOL;
+			$a .= '<link rel="stylesheet" type="text/css" href="bootstrap/css/select2-bootstrap.css" />'.PHP_EOL;
+			$a .= '<link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap-multiselect.css">'.PHP_EOL;
+			$a .= '<link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap-clockpicker.min.css">'.PHP_EOL;
 		}
+		$a .= '<link rel="stylesheet" type="text/css" href="bootstrap/css/jquery-ui.css" />'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="bootstrap/css/jquery-ui-timepicker-addon.css" >'.PHP_EOL;
+        // $a .= '<link rel="stylesheet" type="text/css" href="themes/default/css/jquery.timepicker.min.css" >'.PHP_EOL;
+        // $a .= '<link rel="stylesheet" type="text/css" href="'.$sheetcss.'/mod_bootstrap.css" />'.PHP_EOL;
+        $a .= '<link rel="stylesheet" type="text/css" href="themes/default/css/style.css" />'.PHP_EOL; // le style par défaut
+        $a .= '<link rel="stylesheet" type="text/css" href="'.$sheetcss.'/style.css" />'.PHP_EOL; // le style personnalisé
+		if (isset($use_admin))
+			$a .= '<link rel="stylesheet" type="text/css" href="include/admin_grr.css" />'.PHP_EOL;
 		if ((isset($_GET['pview'])) && ($_GET['pview'] == 1))
 			$a .= '<link rel="stylesheet" type="text/css" href="themes/print/css/style.css" />'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="themes/default/css/jquery-ui.css" />'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="themes/default/css/jquery-ui-timepicker-addon.css" >'.PHP_EOL;
-        $a .= '<link rel="stylesheet" type="text/css" href="'.$sheetcss.'/style.css" />'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="js/jquery-ui.min.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="js/jquery.validate.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="js/jquery-ui-timepicker-addon.js"></script>'.PHP_EOL;
-		$a .= '<script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>'.PHP_EOL;
+        // $a .= '<script type="text/javascript" src="js/jquery.timepicker.min.js"></script>'.PHP_EOL;
+        $a .= '<script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="js/html2canvas.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="js/menu.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="js/jspdf.min.js"></script>'.PHP_EOL;
