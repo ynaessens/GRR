@@ -3,14 +3,9 @@
  * cas.inc.php
  * script de redirection vers l'authentification CAS
  * Ce script fait partie de l'application GRR
- * Dernière modification : $Date: 2017-12-16 14:00$
- * @author    Laurent Delineau <laurent.delineau@ac-poitiers.fr>
- * @copyright Copyright 2008-2008 Laurent Delineau
- * @author    JeromeB & Laurent Delineau & Olivier MOUNIER
- * @author    Laurent Delineau
- * @copyright Copyright 2003-2018 Team DEVOME - JeromeB
- * @author    Yan Naessens
- * @copyright Copyright 2017 Yan Naessens
+ * Dernière modification : $Date: 2026-02-22 11:30$
+ * @copyright Copyright 2008-2026 Team DEVOME - JeromeB
+ * @author    JeromeB & Laurent Delineau & Olivier MOUNIER & Yan Naessens
  * @link      http://www.gnu.org/licenses/licenses.html
  *
  * This file is part of GRR.
@@ -22,22 +17,42 @@
  */
 // Le package phpCAS doit etre stocké dans un sous-répertoire « CAS » du répertoire contenant CAS.php
 // charger le script CAS.php, désormais inclus dans GRR
-include_once('./include/CAS.php');
-
+include_once('vendor/autoload.php');
+//include_once('./include/CAS.php');
+// Enable debugging
+phpCAS::setDebug();
+// Enable verbose error messages. Disable in production!
+phpCAS::setVerbose(true);
 // paramètres du serveur SSO
 // désormais les paramètres sont définis en page d'administration admin_config_sso.php
 $serveurSSO = Settings::get("cas_serveur");
 $serveurSSOPort = intval(Settings::get("cas_port"));
 $serveurSSORacine = Settings::get("cas_racine");
 
+// Version du cas
+$cas_version = Settings::get("cas_version");
+if($cas_version == ""){ // Si rien on prend V2 (valeur défaut GRR <= v4.0.0 grr)
+	$cas_version = "CAS_VERSION_2_0";
+}
+
 // paramètres du proxy (si GRR doit passer par un proxy pour accéder au serveur SSO)
 $cas_proxy_server = Settings::get("cas_proxy_server"); //adresse IP du serveur proxy
 $cas_proxy_port = Settings::get("cas_proxy_port"); // port utilisé par le protocole CAS, doit être autorisé sur le proxy
 
+$client_service_name = Settings::get("grr_url");
+
 /* declare le script comme un client CAS
  Si le dernier argument est à true, cela donne la possibilité à phpCAS d'ouvrir une session php.
 */
- phpCAS::client(CAS_VERSION_2_0,$serveurSSO,$serveurSSOPort,$serveurSSORacine,true);
+if( phpCAS::getVersion() < '1.6.0' ){
+	phpCAS::client( constant( $cas_version ), $serveurSSO, $serveurSSOPort, $serveurSSORacine, true );
+} else{
+	$parseUrl       = parse_url( $client_service_name );
+	$domain_service = $parseUrl['scheme'].'://'.$parseUrl['host'];
+	if ( isset( $parseUrl['port'] ) )
+		$domain_service .= ':'.$parseUrl['port'];
+	phpCAS::client( constant( $cas_version ), $serveurSSO, $serveurSSOPort, $serveurSSORacine, $domain_service, true );
+}
  phpCAS::setLang(PHPCAS_LANG_FRENCH);
 
 //            phpCAS::setCasServerCACert();
@@ -84,6 +99,9 @@ else
 }
 $login = phpCAS::getUser();
 $user_ext_authentifie = 'cas';
-if (file_exists("./include/config_CAS.inc.php"))
-	include("./include/config_CAS.inc.php");
+
+if (file_exists("./personnalisation/config_CAS.inc.php"))
+	include("./personnalisation/config_CAS.inc.php");
+else
+	include("./include/config_cas.inc.php");
 ?>

@@ -1,11 +1,11 @@
 <?php
 /**
  * admin_save_mysql.php
- * Script de sauvegarde de la base de donnée mysql
+ * Script de sauvegarde de la base de données mysql
  * Ce script fait partie de l'application GRR
- * Dernière modification : $Date: 2017-12-16 14:00$
- * @author    Laurent Delineau & JeromeB
- * @copyright Copyright 2003-2018 Team DEVOME - JeromeB
+ * Dernière modification : $Date: 2026-02-28 12:20$
+ * @author    Laurent Delineau & JeromeB & Yan Naessens
+ * @copyright Since 2003 Team DEVOME - JeromeB
  * @link      http://www.gnu.org/licenses/licenses.html
  *
  * This file is part of GRR.
@@ -22,13 +22,15 @@ if ((!isset($_GET['mdp'])) && (!isset($argv[1])) && (!isset($_GET['flag_connect'
 	echo "Il manque des arguments pour executer ce script. Reportez-vous a la documentation.";
 	die();
 }
+
 if ((!isset($_GET['mdp'])) && isset($argv[1]))
 	$_GET['mdp'] = $argv[1];
 if (isset($_GET['mdp']))
 {
-	include "../include/connect.inc.php";
+	include "../personnalisation/connect.inc.php";
 	include "../include/config.inc.php";
 	include "../include/misc.inc.php";
+	include "../include/securite.class.php";
 	include "../include/functions.inc.php";
 	include "../include/$dbsys.inc.php";
 	include("../include/settings.class.php");
@@ -50,11 +52,12 @@ if (isset($_GET['mdp']))
 }
 else
 {
+  $niveauDossier = 2;
 	include "../include/admin.inc.php";
 	$back = '';
 	if (isset($_SERVER['HTTP_REFERER']))
 		$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
-	if (authGetUserLevel(getUserName(),-1) < 6)
+	if (SecuAccess::UserLevel(getUserName(),-1) < 6)
 	{
 		showAccessDenied($back);
 		exit();
@@ -99,6 +102,8 @@ function mysql_version()
 		$match[2] = 0;
 	return $match[0] . "." . $match[1] . "." . $match[2];
 }
+
+VerifyModeDemo();
 
 $nomsql = $dbDb."_le_".date("Y_m_d_\a_H\hi").".sql";
 $now = date('D, d M Y H:i:s') . ' GMT';
@@ -145,8 +150,8 @@ while ($j < count($liste_tables))
 		$schema = $row[1].";";
 		$fd.="$schema\n";
 	}
-	//On ne sauvegarde pas les données de la table ".TABLE_PREFIX."_log
-	if ($donnees && $temp!="".TABLE_PREFIX."_log")
+	//On ne sauvegarde pas les données des tables de logs
+	if ($donnees && $temp!="".TABLE_PREFIX."_log" && $temp!="".TABLE_PREFIX."_log_mail")
 	{
 		// les données de la table
 		$fd.="#\n# Données de $temp\n#\n";
@@ -193,4 +198,6 @@ while ($j < count($liste_tables))
 }
 $fd.="#********* fin du fichier ***********";
 echo $fd;
+
+Settings::set("backup_date", time());
 ?>

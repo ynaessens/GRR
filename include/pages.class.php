@@ -3,7 +3,7 @@
  * Permet de lire et d'écrire les paramètres dans la BDD (Table setting)
  * Dernière modification : $Date: 2018-02-10 18:00$
  * @author    JeromeB
- * @copyright Copyright 2003-2018 Team DEVOME - JeromeB
+ * @copyright Since 2003 Team DEVOME - JeromeB
  * @link      http://www.gnu.org/licenses/licenses.html
  *
  * This file is part of GRR.
@@ -28,9 +28,9 @@ class Pages {
 	{
 		$test = grr_sql_query1("SELECT nom FROM ".TABLE_PREFIX."_page WHERE nom = 'CGU'");
 		if ($test != -1)
-			$sql = "SELECT `nom`, `valeur` FROM ".TABLE_PREFIX."_page";
+			$sql = "SELECT `nom`, `titre`, `valeur`, `systeme` FROM ".TABLE_PREFIX."_page";
 		else
-			$sql = "SELECT `nom`, `valeur` FROM page";
+			$sql = "SELECT `nom`, `titre`, `valeur`, `systeme` FROM page";
 		$res = grr_sql_query($sql);
 		if (!$res)
 			return false;
@@ -39,10 +39,13 @@ class Pages {
 		else
 		{
 			for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
-				self::$grrPages[$row[0]] = $row[1];
+			{
+				self::$grrPages[$row[0]] = array($row[1],$row[2],$row[3]);
+			}
 			return true;
 		}
 	}
+
 
 	static function get($_name)
 	{
@@ -50,18 +53,34 @@ class Pages {
 			return self::$grrPages[$_name];
 	}
 
-	static function set($_name, $_value)
+
+	static function getAll()
+	{
+		$AllPages = array();
+		$sql_query="SELECT `nom`, `titre`, `valeur`, `systeme`, `emplacement` FROM ".TABLE_PREFIX."_page ";
+		$res=grr_sql_query($sql_query);
+		$i = 0;
+		while($row = grr_sql_row($res, $i)){
+			$AllPages[$row[0]] = array($row[1],$row[2],$row[3],$row[4]);
+			$i++;
+		}
+		
+		return $AllPages;
+	}
+
+
+	static function set($_name, $titre, $_value)
 	{
 		if (isset(self::$grrPages[$_name]))
 		{
-			$sql = "UPDATE ".TABLE_PREFIX."_page set valeur = '" . protect_data_sql($_value) . "' where nom = '" . protect_data_sql($_name) . "'";
+			$sql = "UPDATE ".TABLE_PREFIX."_page set titre = '".SecuChaine::ProtectDataSql($titre)."', valeur = '" . SecuChaine::ProtectDataSql($_value) . "' where nom = '" . SecuChaine::ProtectDataSql($_name) . "'";
 			$res = grr_sql_query($sql);
 			if (!$res)
 				return false;
 		}
 		else
 		{
-			$sql = "INSERT INTO ".TABLE_PREFIX."_page set nom = '" . protect_data_sql($_name) . "', valeur = '" . protect_data_sql($_value) . "'";
+			$sql = "INSERT INTO ".TABLE_PREFIX."_page set nom = '" . SecuChaine::ProtectDataSql($_name) . "', titre = '".SecuChaine::ProtectDataSql($titre)."', valeur = '" . SecuChaine::ProtectDataSql($_value) . "', systeme  = '0'  " ;
 			$res = grr_sql_query($sql);
 			if (!$res)
 				return (false);

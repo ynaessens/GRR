@@ -4,7 +4,7 @@
  * script de bas de page html
  * Dernière modification : $Date: 2018-07-14 17:00$
  * @author    JeromeB & Laurent Delineau & Yan Naessens
- * @copyright Copyright 2003-2018 Team DEVOME - JeromeB
+ * @copyright Since 2003 Team DEVOME - JeromeB
  * @link      http://www.gnu.org/licenses/licenses.html
  *
  * This file is part of GRR.
@@ -37,7 +37,7 @@ if ((!isset($_GET['pview']) || ($_GET['pview'] != 1)) && (isset($affiche_pview) 
 			$s .= htmlspecialchars($_SERVER['QUERY_STRING']) . "&amp;";
 		$s .= "pview=1&amp;precedent=1'\"";
 	}
-	$s.= "><span class=\"glyphicon glyphicon-print\"></span></button>";
+	$s.= "><i class=\"fa-solid fa-print\"></i></button>";
 	echo $s;
 }
 // Affichage du message d'erreur en cas d'échec de l'envoi de mails automatiques

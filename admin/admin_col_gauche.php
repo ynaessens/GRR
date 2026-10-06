@@ -2,9 +2,9 @@
 /**
  * admin_col_gauche.php
  * colonne de gauche des écrans d'administration des sites, des domaines et des ressources de l'application GRR
- * Dernière modification : $Date: 2017-12-16 14:00$
+ * Dernière modification : $Date: 2018-07-22 13:30$
  * @author    JeromeB & Laurent Delineau & Marc-Henri PAMISEUX
- * @copyright Copyright 2003-2018 Team DEVOME - JeromeB
+ * @copyright Since 2003 Team DEVOME - JeromeB
  * @link      http://www.gnu.org/licenses/licenses.html
  *
  * This file is part of GRR.
@@ -16,116 +16,169 @@
  */
 
 
-function affichetableau($liste,$titre='')
+function afficheLienNiveau1($lien, $image, $niveau = 1)
 {
-	global $chaine, $vocab;
+	global $twig, $page, $menuAdminT;
+
+	if($page == $lien){
+		$classActive = " active";
+	} else{
+		$classActive = "";
+	}
+
+	$menuAdminT[] = array('niveau' => 1, 'nom' => get_vocab($lien), 'lien' => '?p='.$lien, 'classLi' => $classActive, 'image' => $image);
+}
+
+function afficheLienNiveau2($nomSection,$image,$liste,$iN2)
+{
+	global $chaine, $menuAdminT, $menuAdminTN2, $page;
+
+	$classLi = "";
+	$classA = "";
+
 	if (count($liste) > 0)
 	{
-		echo "<fieldset>\n";
-		echo "<legend>$titre</legend><ul>\n";
-		$k = 0;
-		foreach ($liste as $key)
-		{
-			if ($chaine == $key)
-				echo "<li><a href='".$key."' style='color:blue;'>".get_vocab($key)."</a></li>\n";
-			else
-				echo "<li><a href='".$key."'>".get_vocab($key)."</a></li>\n";
-			$k++;
+		foreach ($liste as $key){
+			$classALien = "";
+			if($page == $key){
+				$classLi = " menu-open";
+				$classA = " active";
+				$classALien = " active";
+			}
+			$menuAdminTN2[] = array('niveau' => 2, 'niveau1' => $iN2, 'nom' => get_vocab($key), 'lien' => '?p='.$key, 'classLi' => $classALien);
 		}
-		echo "</ul></fieldset>\n";
+		unset($liste);
+
+		$menuAdminT[] = array('niveau' => 2, 'niveau1' => $iN2, 'nom' => get_vocab($nomSection), 'lien' => '', 'classLi' => $classLi, 'classA' => $classA, 'image' => $image);
 	}
 }
 
-echo "<table class=\"table_adm4\">";
-// Affichage de la colonne de gauche
+if (get_request_uri() != ''){
+	//$url_ = parse_url(get_request_uri());
+	//$pos = strrpos($url_['path'], "/") + 1;
+	//$chaine = substr($url_['path'], $pos);
+} else {
+	$chaine = '';
+}
+
+//Construction du menu
+$iN2 = 0;
+$liste = array();
+$menuAdminT = array();
+$menuAdminTN2 = array();
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 4)
+	afficheLienNiveau1('admin_accueil', 'fa fa-tachometer-alt', 1);
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6)
+	afficheLienNiveau1('admin_config', 'fa fa-cogs', 1);
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6)
+	afficheLienNiveau1('admin_type', 'fa fa-tags', 1);
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6)
+	afficheLienNiveau1('admin_calend_ignore', 'fa fa-calendar-times', 1);
+if ((SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6) && (Settings::get('show_holidays') == 'Oui'))
+	afficheLienNiveau1('admin_calend_vacances_feries', 'fa fa-calendar-minus', 1);
+if ((SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6) && (Settings::get("jours_cycles_actif") == "Oui"))
+	afficheLienNiveau1('admin_calend_jour_cycle1', 'fa fa-redo ', 1);
+
+
+if ((SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6) && (Settings::get("module_multisite") == "Oui"))
+	afficheLienNiveau1('admin_site', 'fa fa-building', 1);
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 4)
+	afficheLienNiveau1('admin_room', 'fa fa-folder', 1);
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 4)
+	afficheLienNiveau1('admin_overload', 'fa fa-object-group', 1);
+
+
+// Utilisateurs
+$liste = array();
+if ((SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6) || (SecuAccess::UserLevel(getUserName(), -1, 'user') == 1))
+	$liste[] = 'admin_user';
+if ( ((SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6) || (SecuAccess::UserLevel(getUserName(), -1, 'user') == 1)) && (Settings::get('fct_crea_cpt') == 'y'))
+	$liste[] = 'admin_user_demandes';
+if ((SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6) || (SecuAccess::UserLevel(getUserName(), -1, 'user') == 1))
+	$liste[] = 'admin_groupe';
+if ((Settings::get("module_multisite") == "Oui") && (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6))
+	$liste[] = 'admin_admin_site';
+if ((Settings::get("module_multisite") == "Oui") && (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6))
+	$liste[] = 'admin_access_site';
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6)
+	$liste[] = 'admin_right_admin';
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 4)
+	$liste[] = 'admin_access_area';
+$test = grr_sql_query1("SELECT COUNT(`who_can_book`) FROM ".TABLE_PREFIX."_room WHERE `who_can_book` = 0 ");
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 4)
+	$liste[] = 'admin_book_room';
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 4)
+	$liste[] = 'admin_right';
+if ( (Settings::get("sso_ac_corr_profil_statut") == 'y') && (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 5) )
+	$liste[] = 'admin_corresp_statut';
+foreach ($menuAdminComplNiv2User as list($droit, $lien, $icone)) {
+	if(SecuAccess::UserLevel(getUserName(), -1, 'area') >= $droit)
+		$liste[] = $lien;
+}
+
+afficheLienNiveau2("admin_menu_user", "fa fa-users",$liste,$iN2++);
+
+// Mails
+$liste = array();
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6)
+	$liste[] = 'admin_mail_serveur';
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 4)
+	$liste[] = 'admin_email_manager';
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6)
+	$liste[] = 'admin_mails';
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6)
+	$liste[] = 'admin_view_emails';
+foreach ($menuAdminComplNiv2Mail as list($droit, $lien, $icone)) {
+	if(SecuAccess::UserLevel(getUserName(), -1, 'area') >= $droit)
+		$liste[] = $lien;
+}
+
+afficheLienNiveau2("admin_menu_mail", "fa fa-envelope",$liste,$iN2++);
+
+// Divers
+$liste = array();
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6)
+	$liste[] = 'admin_view_connexions';
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6)
+	$liste[] = 'admin_log_resa_liste';
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 4)
+	$liste[] = 'admin_calend';
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6)
+	$liste[] = 'admin_page';
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6)
+	$liste[] = 'admin_cgu';
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6)
+	$liste[] = 'admin_couleurs';
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6)
+	$liste[] = 'admin_infos';
+if (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6)
+	$liste[] = 'admin_nettoyage_bdd';
+foreach ($menuAdminComplNiv2Divers as list($droit, $lien, $icone)) {
+	if(SecuAccess::UserLevel(getUserName(), -1, 'area') >= $droit)
+		$liste[] = $lien;
+}
+
+afficheLienNiveau2("admin_menu_various", "fa fa-database",$liste,$iN2++);
+
+// Connexion externe
+$liste = array();
+if ( (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6) && ((!isset($sso_restrictions)) || ($ldap_restrictions == false)) )
+	$liste[] = 'admin_config_ldap';
+if ( (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6) && ((!isset($sso_restrictions)) || ($sso_restrictions == false)) )
+	$liste[] = 'admin_config_sso';
+if ( (SecuAccess::UserLevel(getUserName(), -1, 'area') >= 6) && ((!isset($sso_restrictions)) || ($imap_restrictions == false)) )
+	$liste[] = 'admin_config_imap';
+foreach ($menuAdminComplNiv2Connexions as list($droit, $lien, $icone)) {
+	if(SecuAccess::UserLevel(getUserName(), -1, 'area') >= $droit)
+		$liste[] = $lien;
+}
+
+afficheLienNiveau2("admin_menu_connexion_externe", "fa fa-sign-out-alt",$liste,$iN2++);
+
+// Autre lien niveau 1
+foreach ($menuAdminComplNiv1 as list($droit, $lien, $icone)) {
+	if(SecuAccess::UserLevel(getUserName(), -1, 'area') >= $droit)
+		afficheLienNiveau1($lien, $icone, 1);
+}
+
 ?>
-<tr>
-	<td class="colgauche_admin">
-		<?php
-		if (get_request_uri() != '')
-		{
-			$url_ = parse_url(get_request_uri());
-			$pos = strrpos($url_['path'], "/") + 1;
-			$chaine = substr($url_['path'], $pos);
-		}
-		else
-			$chaine = '';
-		echo "<div id=\"colgauche\">\n";
-		$liste = array();
-		if (authGetUserLevel(getUserName(), -1, 'area') >= 6)
-			$liste[] = 'admin_config.php';
-		if (authGetUserLevel(getUserName(), -1, 'area') >= 6)
-			$liste[] = 'admin_type.php';
-		if (authGetUserLevel(getUserName(), -1, 'area') >= 6)
-			$liste[] = 'admin_calend_ignore.php';
-		if ((authGetUserLevel(getUserName(), -1, 'area') >= 6)&&(Settings::get('show_holidays') == 'Oui'))
-			$liste[] = 'admin_calend_vacances_feries.php';
-		if (Settings::get("jours_cycles_actif") == "Oui")
-		{
-			if (authGetUserLevel(getUserName(), -1, 'area') >= 6)
-				$liste[] = 'admin_calend_jour_cycle.php';
-		}
-		affichetableau($liste,get_vocab("admin_menu_general"));
-		$liste = array();
-		if (Settings::get("module_multisite") == "Oui")
-		{
-			if (authGetUserLevel(getUserName(), -1, 'area') >= 6)
-				$liste[] = 'admin_site.php';
-		}
-		if (authGetUserLevel(getUserName(), -1, 'area') >= 4)
-			$liste[] = 'admin_room.php';
-		if (authGetUserLevel(getUserName(), -1, 'area') >= 4)
-			$liste[] = 'admin_overload.php';
-		if (Settings::get("module_multisite") == "Oui")
-			affichetableau($liste,get_vocab("admin_menu_site_area_room"));
-		else
-			affichetableau($liste,get_vocab("admin_menu_arearoom"));
-
-		$liste = array();
-		if ((authGetUserLevel(getUserName(), -1, 'area') >= 6) || (authGetUserLevel(getUserName(), -1, 'user') == 1))
-			$liste[] = 'admin_user.php';
-		if (Settings::get("module_multisite") == "Oui")
-			if (authGetUserLevel(getUserName(), -1, 'area') >= 6)
-				$liste[] = 'admin_admin_site.php';
-			if (authGetUserLevel(getUserName(), -1, 'area') >= 6)
-				$liste[] = 'admin_right_admin.php';
-			if (authGetUserLevel(getUserName(), -1, 'area') >= 4)
-				$liste[] = 'admin_access_area.php';
-			if (authGetUserLevel(getUserName(), -1, 'area') >= 4)
-				$liste[] = 'admin_right.php' ;
-			if ((Settings::get("ldap_statut") != "") || (Settings::get("sso_statut") != "") || (Settings::get("imap_statut") != ""))
-			{
-				if (authGetUserLevel(getUserName(), -1, 'area') >= 6)
-					$liste[] = 'admin_purge_accounts.php';
-			}
-			affichetableau($liste,get_vocab("admin_menu_user"));
-			$liste = array();
-			if (authGetUserLevel(getUserName(), -1, 'area') >= 4)
-				$liste[] = 'admin_email_manager.php';
-			if (authGetUserLevel(getUserName(), -1, 'area') >= 6)
-				$liste[] = 'admin_view_connexions.php';
-			if (authGetUserLevel(getUserName(), -1, 'area') >= 4)
-				$liste[] = 'admin_calend.php';
-			if (authGetUserLevel(getUserName(), -1, 'area') >= 6)
-				$liste[] = 'admin_cgu.php';
-			if (authGetUserLevel(getUserName(), -1, 'area') >= 6)
-				$liste[] = 'admin_maj.php';
-			if (Settings::get("sso_ac_corr_profil_statut") == 'y') {
-				if (authGetUserLevel(getUserName(), -1, 'area') >= 5)
-					$liste[] = 'admin_corresp_statut.php';
-			}
-			affichetableau($liste,get_vocab("admin_menu_various"));
-
-			$liste = array();
-			if ( (authGetUserLevel(getUserName(), -1, 'area') >= 6) && ((!isset($sso_restrictions)) || ($ldap_restrictions == false)) )
-				$liste[] = 'admin_config_ldap.php';
-			if ( (authGetUserLevel(getUserName(), -1, 'area') >= 6) && ((!isset($sso_restrictions)) || ($sso_restrictions == false)) )
-				$liste[] = 'admin_config_sso.php';
-			if ( (authGetUserLevel(getUserName(), -1, 'area') >= 6) && ((!isset($sso_restrictions)) || ($imap_restrictions == false)) )
-				$liste[] = 'admin_config_imap.php';
-			affichetableau($liste,get_vocab("admin_menu_auth"));
-
-			echo "</div>\n";
-?>
-		</td>
-		<td>

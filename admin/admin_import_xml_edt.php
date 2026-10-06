@@ -3,9 +3,9 @@
  * admin_import_xml_edt.php
  * Importe un fichier de réservations au format xml issu du logiciel EDT Index Education
  * Ce script fait partie de l'application GRR
- * Dernière modification : $Date: 2017-12-16 14:00$
+ * Dernière modification : $Date: 2023-07-27 15:40$
  * @author    JeromeB & Yan Naessens & Laurent Delineau
- * @copyright Copyright 2003-2018 Team DEVOME - JeromeB
+ * @copyright Since 2003 Team DEVOME - JeromeB
  * @link      http://www.gnu.org/licenses/licenses.html
  *
  * This file is part of GRR.
@@ -108,7 +108,7 @@ echo '<table class="table_adm">';
                     $day   = date("d");
                     $month = date("m");
                     $year  = date("Y"); //par défaut on propose la date du jour
-                    echo '<div class="col-xs-12">'.PHP_EOL;
+                    echo '<div class="col col-xs-12">'.PHP_EOL;
                     echo '<div class="form-inline">'.PHP_EOL;
                     genDateSelector('beg_', $day, $month, $year, 'more_years');
                     echo '<input type="hidden" disabled="disabled" id="mydate_'.$typeDate.'">'.PHP_EOL;
@@ -123,7 +123,7 @@ echo '<table class="table_adm">';
                     $day   = date("d");
                     $month = date("m");
                     $year  = date("Y"); //par défaut on propose la date du jour
-                    echo '<div class="col-xs-12">'.PHP_EOL;
+                    echo '<div class="col col-xs-12">'.PHP_EOL;
                     echo '<div class="form-inline">'.PHP_EOL;
                     genDateSelector('end_', $day, $month, $year, 'more_years');
                     echo '<input type="hidden" disabled="disabled" id="mydate_'.$typeDate.'">'.PHP_EOL;
@@ -155,7 +155,7 @@ echo '<table class="table_adm">';
                         //echo $cours;
                         //echo("<p><b>Structure</b><br />");
                     foreach($cours->attributes() as $key => $value) {
-                        echo(" Cours $key -&gt;".$value."<br />");
+                        echo(" Cours ".SecuChaine::CleanInput($key)." -&gt;".SecuChaine::CleanInput($value)."<br />");
                         $i++;
                         $tab_cours[$i]=array();
                         $tab_cours[$i]['attribut'][$key]=$value;
@@ -166,27 +166,27 @@ echo '<table class="table_adm">';
                         }
                                 //print_r($tab_cours[$i]);
                         $salle = $tab_cours[$i]['enfant']['salle']; // traiter le cas d'une salle vide ?
-                        $room_id = grr_sql_query1("SELECT id FROM ".TABLE_PREFIX."_room WHERE room_name='".$salle."'");
+                        $room_id = grr_sql_query1("SELECT id FROM ".TABLE_PREFIX."_room WHERE room_name='".SecuChaine::ProtectDataSql($salle)."'");
                         $jour_semaine = $joursemaine[substr(strtolower($tab_cours[$i]['enfant']['jour']),0,3)]; 
                         $name = $tab_cours[$i]['enfant']['classe'].' - '.$tab_cours[$i]['enfant']['mat_libelle']; // nettoyer le code classe pour les groupes complexes 
                         $description = $tab_cours[$i]['enfant']['prof_nom'].' '.$tab_cours[$i]['enfant']['prof_prenom'];
-                     /*   $day = strftime("%d", Settings::get('begin_bookings')); // provisoirement
-                        $month = strftime("%m", Settings::get('begin_bookings'));
-                        $year = strftime("%Y", Settings::get('begin_bookings')); */
+                     /*   $day = date('d', Settings::get('begin_bookings')); // provisoirement
+                        $month = date('m', Settings::get('begin_bookings'));
+                        $year = date('Y', Settings::get('begin_bookings')); */
                         $h_deb = $tab_cours[$i]['enfant']['h.debut'];
                         $pos_h = strpos($h_deb,'h');
                         $hour = intval(substr($h_deb,0,$pos_h));
                         $minute = intval(substr($h_deb,$pos_h+1,5));
-                     /*   $end_day = strftime("%d", Settings::get('begin_bookings')); // provisoirement
-                        $end_month = strftime("%m", Settings::get('begin_bookings'));
-                        $end_year = strftime("%Y", Settings::get('begin_bookings')); */
+                     /*   $end_day = date('d', Settings::get('begin_bookings')); // provisoirement
+                        $end_month = date('m', Settings::get('begin_bookings'));
+                        $end_year = date('Y', Settings::get('begin_bookings')); */
                         $duree = $tab_cours[$i]['enfant']['duree'];
                         $pos_h = strpos($duree,'h');
                         $end_hour = $hour + intval(substr($duree,0,$pos_h));
                         $end_minute = $minute + intval(substr($duree,$pos_h+1,5));
-                      /*  $rep_end_day = strftime("%d", Settings::get('end_bookings')); // provisoirement
-                        $rep_end_month = strftime("%m", Settings::get('end_bookings'));
-                        $rep_end_year = strftime("%Y", Settings::get('end_bookings')); */
+                      /*  $rep_end_day = date('d', Settings::get('end_bookings')); // provisoirement
+                        $rep_end_month = date('m', Settings::get('end_bookings'));
+                        $rep_end_year = date('Y', Settings::get('end_bookings')); */
                         if ($tab_cours[$i]['enfant']['frequence'] == 'H'){ $rep_semaine = 0;}
                         elseif ($tab_cours[$i]['enfant']['frequence'] == 'Q1') {$rep_semaine = 1;}
                         else {$rep_semaine = 2;}
@@ -258,8 +258,8 @@ function entre_reservation($room_id,$jour_semaine,$name,$description,
 		settype($end_year,"integer");
 		settype($end_minute,"integer");
 		settype($end_hour,"integer");
-		$minyear = strftime("%Y", Settings::get('begin_bookings'));
-		$maxyear = strftime("%Y", Settings::get("end_bookings"));
+		$minyear = date('Y', Settings::get('begin_bookings'));
+		$maxyear = date('Y', Settings::get("end_bookings"));
 		if ($end_day < 1) $end_day = 1;
 		if ($end_day > 31) $end_day = 31;
 		if ($end_month < 1) $end_month = 1;
@@ -422,8 +422,7 @@ function entre_reservation($room_id,$jour_semaine,$name,$description,
 // toujours des initialisations au hasard
                $courrier = 0;
                $overload_data = '';
-			   mrbsCreateRepeatingEntrys($starttime, $endtime,   $rep_type, $rep_enddate, $rep_opt,
-						$room_id, $create_by, $beneficiaire, $beneficiaire_ext, $name, $type, $description, $rep_num_weeks, $option_reservation,$overload_data, $entry_moderate,$rep_jour_c, $courrier, $rep_month_abs1, $rep_month_abs2);
+			   mrbsCreateRepeatingEntrys($starttime, $endtime, $rep_type, $rep_enddate, $rep_opt,$room_id, $create_by, $beneficiaire, $beneficiaire_ext, $name, $type, $description, $rep_num_weeks, $option_reservation,$overload_data, $entry_moderate,$rep_jour_c, $courrier,0, $rep_month_abs1, $rep_month_abs2);
 		
 			}
 		
@@ -450,7 +449,7 @@ function entre_reservation($room_id,$jour_semaine,$name,$description,
 		
 		// Si il y a tentative de réserver pendant une durée dépassant la durée max
 		if ($error_duree_max_resa_area == 'yes') {
-			$area_id = grr_sql_query1("select area_id from ".TABLE_PREFIX."_room where id='".protect_data_sql($room_id)."'");
+			$area_id = grr_sql_query1("select area_id from ".TABLE_PREFIX."_room where id='".SecuChaine::ProtectDataSql($room_id)."'");
 			$duree_max_resa_area = grr_sql_query1("select duree_max_resa_area from ".TABLE_PREFIX."_area where id='".$area_id."'");
 			print_header();
 			$temps_format = $duree_max_resa_area*60;
@@ -532,8 +531,8 @@ function entre_reservation($room_id,$jour_semaine,$name,$description,
 			if(!isset($hide_title))
 				echo "</UL>";
 				// possibilité de supprimer la (les) réservation(s) afin de valider la nouvelle réservation.
-				if(authGetUserLevel(getUserName(),$area,'area') >= 4)
-					echo "<center><table border=\"1\" cellpadding=\"10\" cellspacing=\"1\"><tr><td class='avertissement'><h3><a href='".traite_grr_url("","y")."edit_entry_handler.php?".$_SERVER['QUERY_STRING']."&amp;del_entry_in_conflict=yes'>".get_vocab("del_entry_in_conflict")."</a></h4></td></tr></table></center><br />";
+				if(SecuAccess::UserLevel(getUserName(),$area,'area') >= 4)
+					echo "<center><table border=\"1\" cellpadding=\"10\" cellspacing=\"1\"><tr><td class='avertissement'><h3><a href='".traite_grr_url("","y")."app.php?p=editentreetrt&amp;".$_SERVER['QUERY_STRING']."&amp;del_entry_in_conflict=yes'>".get_vocab("del_entry_in_conflict")."</a></h4></td></tr></table></center><br />";
 		
 		}
 		return true;

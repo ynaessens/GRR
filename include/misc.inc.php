@@ -2,9 +2,9 @@
 /**
  * misc.inc.php
  * fichier de variables diverses
- * Dernière modification : $Date: 2018-07-20 14:00$
+ * Dernière modification : $Date: 2026-03-22 11:10$
  * @author    JeromeB & Laurent Delineau & Yan Naessens
- * @copyright Copyright 2003-2018 Team DEVOME - JeromeB
+ * @copyright Since 2003 Team DEVOME - JeromeB
  * @link      http://www.gnu.org/licenses/licenses.html
  *
  * This file is part of GRR.
@@ -15,21 +15,44 @@
  * (at your option) any later version.
  */
 
+// On trouve le fichier .gitattributes à la racine du projet alors c'est un projet git, sinon c'est un projet sans git
+if (file_exists("../.gitattributes")) {
+	$gitHub = "-GitHub";
+} else {
+	$gitHub = "";
+}
 
 ################################
 # Development information
 #################################
-$grr_devel_email = "support@devome.com";
-$grr_devel_url = "http://grr.devome.com/";
+$grr_devel_url = "https://grr.devome.com/";
+
 // Numéro de version actuel
-$version_grr = "3.4.0";
-// Numéro de sous-version actuel (a, b, ...)
-// Utilisez cette variable pour des versions qui corrigent la la version finale sans toucher à la base.
-$sous_version_grr = ""; // a, b, c, ...
-// Numéro de la release candidate (doit être strictement inférieure à 9). Laisser vide s'il s'agit de la version stable.
-$version_grr_RC = "";
-// Version repository (GitHub)
-$versionReposite = "GitHub";
+# Format X.X.XRCX | exemples : 4.4.0a (alpha) ou 4.4.0b (beta) 4.4.0RC1 (Release Candidate) ou 4.4.0 (version OK)
+$version_grr = "4.6.7";
+# Version BDD, deux premirs chiffres = version majeur, les deux suivant la version, évolution de GRR, les 3 derniers une incrémentation à chaque changement
+# Ex 0400003 : 3eme modification sur la branche 4.X.X
+$version_bdd = "0400011";
+// Version repository (GitHub) GitHub-Master / Release-v4.0.0-beta.1 / Release-v4.0.0-RC.1 / Release-v4.0.0
+$versionReposite = "Release-v".$version_grr.$gitHub;
+
+################################
+# Configuration Requise
+#################################
+// Version PHP minimum
+$php_mini = "8.1.0";
+// Version PHP maximum testé et validé par : JeromeB
+$php_max_valide = "8.5.8";
+// Version PHP maximum qui est sensé fonctionné, si compatible avec toutes les versions à ce jour laisser vide
+$php_maxi = "";
+
+// Version MySQL minimum
+$mysql_mini = "5.4.0";
+// Version MySQL maximum testé et validé par : JeromeB
+$mysql_max_valide = "9.6.0";
+// Version MySQL maximum qui est sensé fonctionné
+$mysql_maxi = "";
+
 
 # Liste des tables
 $liste_tables = array(
@@ -39,26 +62,37 @@ $liste_tables = array(
     "_calendrier_feries",
 	"_calendrier_jours_cycle",
 	"_calendrier_vacances",
+	"_correspondance_statut",
 	"_entry",
 	"_entry_moderate",
-	"_type_area",
-	"_j_type_area",
+	"_files",
+	"_groupes",
+	"_j_group_area",
+	"_j_group_site",
 	"_j_mailuser_room",
+	"_j_site_area",
+	"_j_type_area",
+	"_j_useradmin_area",
+	"_j_useradmin_site",
+	"_j_userbook_room",
 	"_j_user_area",
 	"_j_user_room",
+	"_j_user_site",
 	"_log",
+	"_log_mail",
+	"_log_resa",
+	"_modulesext",
+	"_overload",
+	"_page",
+	"_participants",
 	"_repeat",
 	"_room",
 	"_setting",
-	"_utilisateurs",
-	"_j_useradmin_area",
-	"_overload",
 	"_site",
-	"_j_useradmin_site",
-	"_j_site_area",
-	"_correspondance_statut",
-	"_page",
-	"_modulesext",
+	"_type_area",
+	"_utilisateurs",
+	"_utilisateurs_demandes",
+	"_utilisateurs_groupes",
 	);
 
 # Liste des feuilles de style
@@ -71,7 +105,8 @@ $liste_themes = array(
 	"bleu",
 	"rouge",
 	"rose",
-	"fluo"
+	"fluo",
+	"perso"
 	);
 
 # Liste des noms des styles
@@ -84,16 +119,17 @@ $liste_name_themes = array(
 	"Bleu Talmont",
 	"Rouge Feu",
 	"Roseline",
-	"Jaune Fluo"
+	"Jaune Fluo",
+	"Personnalisé via l'admin"
 	);
 
 # Liste des langues
 $liste_language = array(
-	"fr",
-	"de",
-	"en",
-	"it",
-	"es"
+	"fr-fr",
+	"de-de",
+	"en-gb",
+	"it-it",
+	"es-es"
 	);
 
 # Liste des noms des langues
@@ -103,6 +139,36 @@ $liste_name_language = array(
 	"English",
 	"Italiano",
 	"Spanish"
+	);
+
+# Liste des noms des variables de config
+$config_variables = array(
+	"nb_year_calendar",
+	"correct_heure_ete_hiver",
+	"max_rep_entrys",
+	"unicode_encoding",
+	"use_function_mysql_real_escape_string",
+	"use_function_html_entity_decode",
+	"connexionAdminMAJ",
+	"restaureBBD",
+	"debug_flag",
+	"gRecherche_MAJ",
+	"gWarningBackup",
+	"gWarningDossierInstall",
+	"gWarningSSL",
+	"gWarningVersionTest",
+	"upload_Module",
+	"nbMaxJoursLogConnexion",
+	"sso_super_admin",
+	"sso_restrictions",
+	"ldap_restrictions",
+	"imap_restrictions",
+	"fonction_mail_restrictions",
+	"Url_CAS_setFixedServiceURL",
+	"dbsys",
+	"structure",
+	"donnees",
+	"gcTailleMaxDocResa",
 	);
 
 # Compatibilité avec les version inférieures à 1.9.6

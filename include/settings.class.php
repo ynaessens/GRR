@@ -3,7 +3,7 @@
  * Permet de lire et d'écrire les paramètres dans la BDD (Table setting)
  * Dernière modification : $Date: 2017-12-16 14:00$
  * @author    JeromeB & Laurent Delineau
- * @copyright Copyright 2003-2018 Team DEVOME - JeromeB
+ * @copyright Since 2003 Team DEVOME - JeromeB
  * @link      http://www.gnu.org/licenses/licenses.html
  *
  * This file is part of GRR.
@@ -50,24 +50,45 @@ class Settings {
 			return self::$grrSettings[$_name];
 	}
 
+	static function getAll()
+	{
+		$AllSettings = array();
+		$sql_query="SELECT name,value FROM ".TABLE_PREFIX."_setting ";
+		$res=grr_sql_query($sql_query);
+		$i = 0;
+		while($row = grr_sql_row($res, $i)){
+			$AllSettings[$row[0]] = $row[1];
+			$i++;
+		}
+		
+		return $AllSettings;
+	}
+
 	static function set($_name, $_value)
 	{
 		if (isset(self::$grrSettings[$_name]))
 		{
-			$sql = "UPDATE ".TABLE_PREFIX."_setting set VALUE = '" . protect_data_sql($_value) . "' where NAME = '" . protect_data_sql($_name) . "'";
+			$sql = "UPDATE ".TABLE_PREFIX."_setting set VALUE = '" . SecuChaine::ProtectDataSql($_value) . "' where NAME = '" . SecuChaine::ProtectDataSql($_name) . "'";
 			$res = grr_sql_query($sql);
 			if (!$res)
 				return false;
 		}
 		else
 		{
-			$sql = "INSERT INTO ".TABLE_PREFIX."_setting set NAME = '" . protect_data_sql($_name) . "', VALUE = '" . protect_data_sql($_value) . "'";
+			$sql = "INSERT INTO ".TABLE_PREFIX."_setting set NAME = '" . SecuChaine::ProtectDataSql($_name) . "', VALUE = '" . SecuChaine::ProtectDataSql($_value) . "'";
 			$res = grr_sql_query($sql);
 			if (!$res)
 				return (false);
 		}
 		self::$grrSettings[$_name] = $_value;
 		return true;
+	}
+
+	static function delette($name)
+	{
+		$AllSettings = array();
+		$sql_query="DELETE FROM ".TABLE_PREFIX."_setting WHERE NAME = '" . SecuChaine::ProtectDataSql($name) . "'";
+		$res=grr_sql_query($sql_query);
 	}
 }
 ?>

@@ -3,9 +3,9 @@
 /**
  * hook.class.php
  * Permet l'exportation des ressources au format ics
- * Dernière modification : $Date: 2018-03-03 18:00$
+ * Dernière modification : $Date: 2023-09-24 17:00$
  * @author    JeromeB
- * @copyright Copyright 2003-2018 Team DEVOME - JeromeB
+ * @copyright Since 2003 Team DEVOME - JeromeB
  * @link      http://www.gnu.org/licenses/licenses.html
  *
  * This file is part of GRR.
@@ -17,19 +17,42 @@
  */
 
 class Hook{
-	
-	public static function Appel($identifiant_hook){
-	
+
+	public static function Actifs(){
+		global $modulesActifs;
+
+		$modulesActifs2 = array();
+		$modulesActifs2 = $modulesActifs;
+
 		$sql = "SELECT `nom` FROM ".TABLE_PREFIX."_modulesext WHERE `actif` = 1;";
 		$res = grr_sql_query($sql);
 		if ($res)
 		{
 			for ($i = 0; ($row=grr_sql_row($res,$i));$i++)
 			{
-				include(dirname(__FILE__).'/../modules/'.$row[0].'/controleur.php');
+				$modulesActifs2[] = $row[0];
 			}
 		}
 
+		return $modulesActifs2;
+	}
+	
+	public static function Appel($identifiant_hook){
+		global $niveauDossier;
+
+		$CtnHook[$identifiant_hook] = "";
+
+		$modulesActifs2 = Hook::Actifs();
+
+		foreach ($modulesActifs2 as &$nomModule)
+		{
+			if(file_exists('../personnalisation/modules/'.$nomModule.'/controleur.php'))
+				include('../personnalisation/modules/'.$nomModule.'/controleur.php');
+			elseif(file_exists('./personnalisation/modules/'.$nomModule.'/controleur.php'))
+				include('./personnalisation/modules/'.$nomModule.'/controleur.php');
+		}
+
+		return $CtnHook;
 	}
 
 

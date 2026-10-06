@@ -2,9 +2,9 @@
 /**
  * config.inc.php
  * Fichier de configuration de GRR
- * Dernière modification : $Date: 2017-12-16 14:00$
+ * Dernière modification : $Date: 2026-01-18 10:45$
  * @author    JeromeB & Laurent Delineau
- * @copyright Copyright 2003-2018 Team DEVOME - JeromeB
+ * @copyright Since 2003 Team DEVOME - JeromeB
  * @link      http://www.gnu.org/licenses/licenses.html
  *
  * This file is part of GRR.
@@ -14,10 +14,16 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  */
+ 
+### A LIRE ###
+//! Il est préférable de pas modifier ce fichier, car celui-ci sera écrasé lors des mises à jours
+//! Nous conseillons de creer un fichier dans le dossier peronnalisation en l'appelant "configperso.inc.php"
+# Dans ce dernier ajouter les variables souhaitées avec les valeurs souhaitées, vos valeurs écraseront celles de ce fichier
+##############
 
 /*
 Problème de sessions qui expirent prématurément :
-Chez certains prestataire qui utilisent des serveurs en clustering, il arrive que les sessions expirent aléatoirement.
+Chez certains prestataires qui utilisent des serveurs en clustering, il arrive que les sessions expirent aléatoirement.
 Une solution consiste à enregistrer les sessions PHP dans un autre répertoire que le répertoire par défaut.
 Pour cela, il suffit de décommenter la ligne suivante (en supprimant le premier caractère #)
 et en indiquant à la place de "le_chemin_de_stockage_de_la_session", l'emplacement du nouveau dossier de stockage des sessions.
@@ -67,7 +73,7 @@ date_default_timezone_set('Europe/Paris');
 
 # Affichage d'un domaine par defaut en fonction de l'adresse IP de la machine cliente (voir documentation)
 # Mettre 0 ou 1 pour désactiver ou activer la fonction dans la page de gestion des domaines
- define('OPTION_IP_ADR', 1);
+ $gOptionIp = 1;
 
 # Nom de la session PHP.
 # Le nom de session fait référence à l'identifiant de session dans les cookies.
@@ -76,14 +82,13 @@ date_default_timezone_set('Europe/Paris');
 # Mais si un navigateur est amené à se connecter au cours de la même session, à deux sites GRR différents,
 # ces deux sites GRR doivent avoir des noms de session différents.
 # Dans ce cas, il vous faudra changer la valeur GRR ci-dessous par une autre valeur.
- define('SESSION_NAME', "GRR");
+ $gSessionName = "GRR";
 
 # Nombre maximum (+1) de réservations autorisés lors d'une réservation avec périodicité
  $max_rep_entrys = 365 + 1;
 
 # Positionner la valeur $unicode_encoding à 1 pour utiliser l'UTF-8 dans toutes les pages et dans la base
 # Dans le cas contraire, les textes stockés dans la base dépendent des différents encodage selon la langue selectionnée par l'utilisateur
-# Il est fortement conseillé de lire le fichier notes-utf8.txt à la racine de cette archive
  $unicode_encoding = 1;
 
 # Après installation de GRR, si vous avez le message "Fatal error: Call to undefined function: mysql_real_escape_string() ...",
@@ -106,17 +111,80 @@ $connexionAdminMAJ = 1;
 #L'admin peut restaurer une base depuis l'administration || 0: non ; 1: oui - Defaut 1
 $restaureBBD = 1;
 
+# Définition de l'adresse mail expéditeur, prioritaire sur configuration || Defaut vide
+$gMailExpediteur = "";
+
 #Mode debug || 0: non ; 1: oui - Defaut 0
 $debug_flag = 0;
 
+# Gestion de l'affichage des erreurs PHP dans l'interface d'administration || 0: non ; 1: oui - Defaut 0
+$gDebugPHPadm = 0;
+
+# Gestion de l'affichage des erreurs PHP dans l'interface utilisateur || 0: non ; 1: oui - Defaut 0
+$gDebugPHPresa = 0;
+
+# Sécurité coockies "None", "Lax" ou "Strict" - Defaut "Strict"
+# Peut être nécessaire de mettre "None" si GRR est utilisé dans un contexte de cross-site (ex: GRR intégré dans une iframe sur un autre site), ou Connexion SSO
+$gSameSite = "Strict"; 
+
+#Envois donnée stat sur le GRR sur le serveur grr.devome.com || 0: non ; 1: oui - Defaut 1
+# Les données envoyés sont la version de GRR, la langue par défaut, aucune donnée personnel n'est envoyé (pas d'ip, pas de mail...), elles sont anomymes et ne peuvent faire le lien avec votre GRR
+# Vous avez le choix de le désactiver mais le laissez actif cela nous permet de savoir comment nous pouvont maintenir les versions
+$gEnvoisStatGRR = 1;
+#Envois donnée stat du serveur sur le serveur grr.devome.com || 0: non ; 1: oui - Defaut 1
+# Les données envoyés sont la version php, la version sql, l'os, aucune donnée personnel n'est envoyé (pas d'ip, pas de mail...), elles sont anomymes et ne peuvent faire le lien avec votre GRR
+# Vous avez le choix de le désactiver mais le laissez actif cela nous permet de savoir comment maintenir les versions de GRR
+# Si gEnvoisStatGRR = 0 alors dans les cas aucune donnée n'est envoyée
+$gEnvoisServeur = 1;
+
 #Rechercher des MAJ sur le serveur grr.devome.com || 0: non ; 1: oui - Defaut 1
-$recherche_MAJ = 1;
+$gRecherche_MAJ = 1;
+
+# Identifiant du flux de news || Defaut Hkq45qzeuy74cw54sdf7
+$gFluxNewsDevome = "Hkq45qzeuy74cw54sdf7";
+
+#Activer la possibilité d'utiliser l'option forcer MAJ || 0: non ; 1: oui - Defaut 1
+$forcer_MAJ = 1;
 
 #Possibilité d'upload de module || 0: non ; 1: oui - Defaut 1
 $upload_Module = 1;
 
+#Module Actif
+$modulesActifs = array();
+
 # Nb de jour maximum que l'on garde les logs de connexions, 0 = aucune limite
 $nbMaxJoursLogConnexion = 365;
+
+# Nb de jour maximum que l'on garde les logs des mails envoyés, 0 = aucune limite
+$nbMaxJoursLogEmail = 365;
+
+# Algorithme de cryptage des comptes utilisateur, ne pas changer après installation sauf si reset des mots de passes. Défaut : ripemd320
+$algoPwd = 'ripemd320';
+
+# Alerte dans l'administration si backup > 30jours, nous déconseillons de le désactiver sauf si les sauvegardes sont effectués via un autre moyen
+# 0: alerte inactive ; 1: alerte active - Defaut 1
+$gWarningBackup = 1;
+
+# Alerte dans l'administration si le dossier d'installation est accessible, nous déconseillons de le désactiver sauf si vous avez mis en place une protection d'accès à ce dossier
+# 0: alerte inactive ; 1: alerte active - Defaut 1
+$gWarningDossierInstall = 1;
+
+# Alerte dans l'administration si la version de test est utilisée, nous déconseillons de le désactiver sauf si vous êtes un utilisateur avancé et que vous comprenez les risques liés à l'utilisation d'une version de test en production
+# 0: alerte inactive ; 1: alerte active - Defaut 1
+$gWarningVersionTest = 1;
+
+# Alerte dans l'administration si la connexion n'est pas sécurisée, nous déconseillons de le désactiver sauf si vous êtes un utilisateur avancé et que vous comprenez les risques liés à l'utilisation d'une connexion non sécurisée
+# 0: alerte inactive ; 1: alerte active - Defaut 1
+$gWarningSSL = 1;
+
+##############################
+# ANTI-FLOOD - ENVOIS DE MAIL #
+##############################
+
+#init nb mail
+$gNbMail = 0;
+#nb de mail max par chargement de page || -1 aucune limite, 0 blocage d'envois de mail, > 0 Nb max de mails - Defaut 30
+$gMaxMail = 30;
 
 ##################################################
 # Cas d'une authentification via config.inc.php  #
@@ -151,11 +219,19 @@ $sso_super_admin = false;
 */
  $imap_restrictions = false;
 
+/*
+ $fonction_mail_restrictions : false|true
+ Mettre la valeur du paramètre $fonction_mail_restrictions à "true" rend impossible la selection de la fonction "mail" du serveur pour l'envois de mail
+*/
+ $fonction_mail_restrictions = false;
+
 // Le paramètre $Url_CAS_setFixedServiceURL est le paramètre utilisé dans la méthode phpCAS::setFixedServiceURL(), dans le fichier cas.inc.php
 // Si ce paramètre est non vide, il sera utilisé par le service CAS
 // Set the fixed URL that will be set as the CAS service parameter. When this method is not called, a phpCAS script uses its own URL.
  $Url_CAS_setFixedServiceURL = '';
 
+ // Liste des mots de passe faciles à éviter pour les comptes utilisateurs, en plus de ceux définis dans le fichier "most_used_passwords.txt"
+ $gMdpFacile = array("", "devome", "grr", "mygrr", "grradmin", "grradmin123", "grr123", "admin", "admin123", "administrateur", "administrateur123", "administrator", "administrator123");
 
 #####################################################
 # Paramètres propres à une authentification SSO LASSO
@@ -163,16 +239,6 @@ $sso_super_admin = false;
 // Indiquez ci-dessous le répertoire d'installation du package spkitlasso
 // (la valeur par défaut le cherche dans le 'include_path' de PHP)
  define('SPKITLASSO',"spkitlasso");
-
-##############################################################
-# Paramètres propres à une authentification sur un serveur LCS
-##############################################################
-# Page d'authentification LCS
- define('LCS_PAGE_AUTHENTIF',"../../lcs/auth.php");
-# Page de la librairie ldap
- define('LCS_PAGE_LDAP_INC_PHP',"/var/www/Annu/includes/ldap.inc.php");
-# Réalise la connexion à la base d'authentification du LCS et include des fonctions de lcs/includes/functions.inc.php
- define('LCS_PAGE_AUTH_INC_PHP',"/var/www/lcs/includes/headerauth.inc.php");
 
 ###################
 # Database settings
@@ -200,4 +266,47 @@ $grrPages = array();
 
 # Make sure notice errors are not reported
 #error_reporting (E_ALL ^ E_NOTICE);
+
+# Création d'un dossier personnalisation pour mettre tout fichiers importé modifié par les utilisateurs de GRR
+$gcDossierCss = "css";
+$gcDossierImg = "images";
+$gcDossierXml = "xml";
+$gcDossierDoc = "docresa";
+$gcDossierLangue = "langue";
+
+# Infos dans la partie admin
+$gInfosServeur = true;
+$gInfosDossier = true;
+
+################################
+# Taille maxi upload fichier import
+#################################
+
+$gcTailleMaxDocResa = 20971520; // 2 Mo
+
+################################
+# Liens personnalisé admin
+#################################
+
+# Permet d'ajouter des liens dans le menu admin
+# Niveau des droits, lien, icone
+/*
+Exemple :
+$menuAdminComplNiv1 = [
+    [4, "admin_type", "fa fa-tags"],
+	[6, "admin_overload", "fa fa-cogs"],
+];
+*/
+
+$menuAdminComplNiv1 = [];
+$menuAdminComplNiv2User = [];
+$menuAdminComplNiv2Mail = [];
+$menuAdminComplNiv2Divers = [];
+$menuAdminComplNiv2Connexions = [];
+
+
+if(file_exists('../personnalisation/configperso.inc.php'))
+	include('../personnalisation/configperso.inc.php');
+elseif(file_exists('personnalisation/configperso.inc.php'))
+	include('personnalisation/configperso.inc.php');
 ?>

@@ -2,9 +2,9 @@
 /**
  * mysql.inc.php
  * Bibliothèque de fonctions pour le support mysql
- * Dernière modification : $Date: 2018-04-11 10:00$
+ * Dernière modification : $Date: 2026-05-14 11:51$
  * @author    JeromeB & Laurent Delineau & Yan Naessens
- * @copyright Copyright 2003-2018 Team DEVOME - JeromeB
+ * @copyright Since 2003 Team DEVOME - JeromeB
  * @link      http://www.gnu.org/licenses/licenses.html
  *
  * This file is part of GRR.
@@ -25,6 +25,8 @@ if (!$GLOBALS['db_c'] || !mysqli_select_db ($GLOBALS['db_c'], $dbDb))
 	exit;
 }
 mysqli_query($GLOBALS['db_c'], "SET NAMES UTF8");
+mysqli_report(MYSQLI_REPORT_OFF); // comportement par défaut sur php<8.1
+
 /**
  * @param integer $row
  */
@@ -42,37 +44,96 @@ function grr_sql_free($r)
 	if (is_object($r) && $r instanceof mysqli_result && is_resource($r))
 		mysqli_free_result($r);
 }
-// Execute a non-SELECT SQL command (insert/update/delete).
-// Returns the number of tuples affected if OK (a number >= 0).
-// Returns -1 on error; use grr_sql_error to get the error message.
-function grr_sql_command ($sql)
+/* Execute a non-SELECT SQL command (insert/update/delete).
+ * Returns the number of tuples affected if OK (a number >= 0).
+ * Returns -1 on error; use grr_sql_error to get the error message.
+ * Parameters : 
+ * $sql : a prepared SQL command with $types as types and $params as parameters OR a non-prepared SQL command if $types == $params == NULL
+*/
+function grr_sql_command($sql, $types=NULL, $params=NULL)
 {
-	mysqli_query($GLOBALS['db_c'], $sql) or die(mysqli_error($GLOBALS['db_c'])." Q=".$sql);
-		return mysqli_affected_rows($GLOBALS['db_c']);
+    try{
+        if(($types == NULL)&&($params == NULL)){
+            $res = $GLOBALS['db_c']->query($sql);
+            $nb = $GLOBALS['db_c']->affected_rows;
+        }
+        elseif(($types != NULL)&&($params != NULL)){
+            $stmt = $GLOBALS['db_c']->prepare($sql);
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $stmt->store_result();
+            $nb = $stmt->affected_rows;
+            $stmt->close();
+        }
+        else 
+            return -1;  // pourra être amélioré avec php8.2+ où $types peut être omis
+    } catch(mysqli_sql_exception $e) {
+        error_log($e -> getMessage());
+        $_SESSION['msg_a_afficher'] = $e -> getMessage();
+        return -1;
+    }
+    return $nb;
 }
-// Execute an SQL query which should return a single non-negative number value.
-// This is a lightweight alternative to grr_sql_query, good for use with count(*)
-// and similar queries. It returns -1 on error or if the query did not return
-// exactly one value, so error checking is somewhat limited.
-// It also returns -1 if the query returns a single NULL value, such as from
-// a MIN or MAX aggregate function applied over no rows.
-function grr_sql_query1 ($sql)
+/* Execute an SQL query which should return a single non-negative number value.
+ * This is a lightweight alternative to grr_sql_query, good for use with count(*)
+ * and similar queries. It returns -1 on error or if the query did not return
+ * exactly one value, so error checking is somewhat limited.
+ * It also returns -1 if the query returns a single NULL value, such as from
+ * a MIN or MAX aggregate function applied over no rows.
+ * Parameters : 
+ * $sql : a prepared SQL command with $types as types and $params as parameters OR a non-prepared SQL command if $types == $params == NULL
+ */
+function grr_sql_query1($sql, $types = NULL, $params = NULL)
 {
-	$r = mysqli_query($GLOBALS['db_c'], $sql);
-	if (!$r)
-		return -1;
-	if (mysqli_num_rows($r) != 1 || mysqli_field_count($GLOBALS['db_c']) != 1 || ($result_ = mysqli_result($r, 0, 0)) == "")
-		$result_ = -1;
-	mysqli_free_result($r);
-	return $result_;
+    try{
+        if(($types == NULL)&&($params == NULL)){
+            $res = mysqli_query($GLOBALS['db_c'], $sql);
+            if(($res->num_rows != 1)||($res->field_count != 1)||(($r = $res->fetch_row()[0]) == ""))
+              $r = -1;
+            mysqli_free_result($res);
+            return($r);
+        }
+        elseif(($types != NULL)&&($params != NULL)){
+            $stmt = $GLOBALS['db_c']->prepare($sql);
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $res = $stmt->get_result()->fetch_all(MYSQLI_NUM);
+            if((!$res)||(count($res) != 1))
+              $r = -1;
+            else 
+              $r = $res[0][0];
+            $stmt->close();
+            return($r);
+        }
+    } catch(Exception $e) {
+        error_log($e -> getMessage());
+        return -1;
+    }
 }
-// Execute an SQL query. Returns a database-dependent result handle,
-// which should be passed back to grr_sql_row or grr_sql_row_keyed to get the results.
-// Returns 0 on error; use grr_sql_error to get the error message.
-function grr_sql_query($sql)
+/* Execute an SQL query. Returns a database-dependent result handle,
+ * which should be passed back to grr_sql_row or grr_sql_row_keyed to get the results.
+ * Returns 0 on error; use grr_sql_error to get the error message.
+ * Parameters : 
+ * $sql : a prepared SQL command with $types as types and $params as parameters OR a non-prepared SQL command if $types == $params == NULL
+*/
+function grr_sql_query($sql, $types = NULL, $params = NULL)
 {
-	$r = mysqli_query($GLOBALS['db_c'], $sql);
-	return $r;
+    try{
+        if(($types == NULL)&&($params == NULL)){
+            $res = mysqli_query($GLOBALS['db_c'], $sql);
+        }
+        elseif(($types != NULL)&&($params != NULL)){
+            $stmt = $GLOBALS['db_c']->prepare($sql);
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            $stmt->close();
+        }
+    } catch(Exception $e) {
+        error_log($e -> getMessage());
+        return 0;
+    }
+    return($res);
 }
 //retourne la version de mysql
 function grr_sql_version()
@@ -121,6 +182,9 @@ function grr_sql_row_keyed ($r, $i)
 // Return the number of rows returned by a result handle from grr_sql_query.
 function grr_sql_count ($r)
 {
+	if (!$r || $r === false) {
+		return 0;
+	}
 	return mysqli_num_rows($r);
 }
 // Return the value of an autoincrement field from the last insert.
@@ -175,11 +239,6 @@ function grr_sql_mutex_cleanup()
 		$grr_sql_mutex_unlock_name = "";
 	}
 }
-// Generate non-standard SQL for LIMIT clauses:
-function grr_sql_syntax_limit($count, $offset)
-{
-	return " LIMIT $offset,$count ";
-}
 // Generate non-standard SQL to output a TIMESTAMP as a Unix-time:
 /**
  * @param string $fieldname
@@ -194,7 +253,7 @@ function grr_sql_syntax_timestamp_to_unix($fieldname)
 // requires quoting of % and _ in addition to the usual.
 function grr_sql_syntax_caseless_contains($fieldname, $s, $type_recherche = 1)
 {
-	$s = protect_data_sql($s);
+	$s = SecuChaine::ProtectDataSql($s);
 //    $s = str_replace("'", "''", $s);
 //    $s = str_replace("\\", "\\\\", $s);
 	$s = str_replace("%", "\\%", $s);

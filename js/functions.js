@@ -1,9 +1,9 @@
 /*
  * ./js/functions.js
  * fichier Bibliothèque de fonctions Javascript de GRR
- * Dernière modification : $Date: 2018-06-12 10:00$
+ * Dernière modification : $Date: 2025-12-21 11:10$
  * @author    JeromeB & Laurent Delineau & Marc-Henri PAMISEUX & Yan Naessens
- * @copyright Copyright 2003-2018 Team DEVOME - JeromeB
+ * @copyright Since 2003 Team DEVOME - JeromeB
  * @link      http://www.gnu.org/licenses/licenses.html
  *
  * This file is part of GRR.
@@ -110,7 +110,7 @@ function confirmButton(theform,themessage)
  *
  * the_form   string   the form name
  * do_check   boolean  whether to check or to uncheck the element
- * day la valaur de la boîte à cocher ou à décocher
+ * day la valeur de la boîte à cocher ou à décocher
  * return  boolean  always true
  */
  function setCheckboxesGrr(elts, do_check, day)
@@ -143,128 +143,14 @@ function confirmButton(theform,themessage)
  	}
  	return true;
 } // end of the 'setCheckboxes()' function
-function _setCheckboxesGrr(the_form, do_check, day)
-{
-	var elts = document.forms[the_form];
-	for (i = 0; i < elts.elements.length; i++)
-	{
-		type = elts.elements[i].type;
-		if (type="checkbox")
-		{
-			if ((elts.elements[i].value== day) || (day=='all'))
-			{
-				elts.elements[i].checked = do_check;
-			}
-		}
-	}
-	return true;
-}
 // end of the 'setCheckboxes()' function
 // Les quatre fonctions qui suivent servent à enregistrer un cookie
-// Elles sont utilisées par edit_enty.php pour conserver les informations de la saisie pour
+// Elles sont utilisées par edit_entry.php pour conserver les informations de la saisie pour
 // pouvoir les récupérer lors d'une erreur.
 //Hugo
 // Voir http://www.howtocreate.co.uk/jslibs/script-saveformvalues
+// les erreurs constatées lors de l'utilisation de champs additionnels sont prévisibles : howtocreate déconseille l'utilisation des scripts lorsque le formulaire est calculé par Javascript :-(
 var FS_INCLUDE_NAMES = 0, FS_EXCLUDE_NAMES = 1, FS_INCLUDE_IDS = 2, FS_EXCLUDE_IDS = 3, FS_INCLUDE_CLASSES = 4, FS_EXCLUDE_CLASSES = 5;
-//Hugo - fonction qui récupère les informations des champs input pour les stocker dans un cookie (Voir http://www.howtocreate.co.uk/jslibs/script-saveformvalues)
-function getFormString( formRef, oAndPass, oTypes, oNames )
-{
-	if (oNames)
-	{
-		oNames = new RegExp((( oTypes > 3 )?'\\b(':'^(')+oNames.replace(/([\\\/\[\]\(\)\.\+\*\{\}\?\^\$\|])/g,'\\$1').replace(/,/g,'|')+(( oTypes > 3 )?')\\b':')$'),'');
-		var oExclude = oTypes % 2;
-	}
-	for (var x = 0, oStr = '', y = false; formRef.elements[x]; x++)
-	{
-		if (formRef.elements[x].type)
-		{
-			if (oNames)
-			{
-				var theAttr = (oTypes > 3) ? formRef.elements[x].className : ((oTypes > 1) ? formRef.elements[x].id : formRef.elements[x].name);
-				if ((oExclude && theAttr && theAttr.match(oNames)) || (!oExclude && !( theAttr && theAttr.match(oNames))))
-				{
-					continue;
-				}
-			}
-			var oE = formRef.elements[x];var oT = oE.type.toLowerCase();
-			if (oT == 'text' || oT == 'textarea' || ( oT == 'password' && oAndPass ) || oT == 'datetime' || oT == 'datetime-local' || oT == 'date' || oT == 'month' || oT == 'week' || oT == 'time' || oT == 'number' || oT == 'range' || oT == 'email' || oT == 'url')
-			{
-				oStr += ( y ? ',' : '' ) + oE.value.replace(/%/g,'%p').replace(/,/g,'%c');
-				y = true;
-			}
-			else if (oT == 'radio' || oT == 'checkbox')
-			{
-				oStr += (y ? ',' : '') + (oE.checked ? '1' : '');
-				y = true;
-			}
-			else if (oT == 'select-one')
-			{
-				oStr += (y ? ',' : '') + oE.selectedIndex;
-				y = true;
-			}
-			else if (oT == 'select-multiple')
-			{
-				for (var oO = oE.options, i = 0; oO[i]; i++ )
-				{
-					oStr += (y ? ',' : '') + (oO[i].selected ? '1' : '');
-					y = true;
-				}
-			}
-		}
-	}
-	return oStr;
-}
-//Hugo - Fonction qui récupère les informations stockées dans le cookie pour les remettre dans les inputs (Voir http://www.howtocreate.co.uk/jslibs/script-saveformvalues)
-function recoverInputs( formRef, oStr, oAndPass, oTypes, oNames )
-{
-	if (oStr)
-	{
-		oStr = oStr.split( ',' );
-		if (oNames)
-		{
-			oNames = new RegExp((( oTypes > 3 )?'\\b(':'^(')+oNames.replace(/([\\\/\[\]\(\)\.\+\*\{\}\?\^\$\|])/g,'\\$1').replace(/,/g,'|')+(( oTypes > 3 )?')\\b':')$'),'');
-			var oExclude = oTypes % 2;
-		}
-		for (var x = 0, y = 0; formRef.elements[x]; x++ )
-		{
-			if (formRef.elements[x].type)
-			{
-				if (oNames)
-				{
-					var theAttr = ( oTypes > 3 ) ? formRef.elements[x].className : ( ( oTypes > 1 ) ? formRef.elements[x].id : formRef.elements[x].name );
-					if ((oExclude && theAttr && theAttr.match(oNames)) || (!oExclude && (!theAttr || !theAttr.match(oNames))))
-					{
-						continue;
-					}
-				}
-				var oE = formRef.elements[x];var oT = oE.type.toLowerCase();
-				if (oT == 'text' || oT == 'textarea' || (oT == 'password' && oAndPass) || oT == 'datetime' || oT == 'datetime-local' || oT == 'date' || oT == 'month' || oT == 'week' || oT == 'time' || oT == 'number' || oT == 'range' || oT == 'email' || oT == 'url' )
-				{
-					oE.value = oStr[y].replace(/%c/g,',').replace(/%p/g,'%');
-					y++;
-				}
-				else if (oT == 'radio' || oT == 'checkbox')
-				{
-					oE.checked = oStr[y] ? true : false;
-					y++;
-				}
-				else if ( oT == 'select-one')
-				{
-					oE.selectedIndex = parseInt( oStr[y]);
-					y++;
-				}
-				else if ( oT == 'select-multiple')
-				{
-					for (var oO = oE.options, i = 0; oO[i]; i++ )
-					{
-						oO[i].selected = oStr[y] ? true : false;
-						y++;
-					}
-				}
-			}
-		}
-	}
-}
 function retrieveCookie(cookieName)
 {
 	/* retrieved in the format
@@ -296,7 +182,7 @@ function setCookie(cookieName, cookieValue, lifeTime, path, domain, isSecure)
 	syntax: cookieName=cookieValue[;expires=dataAsString[;path=pathAsString[;domain=domainAsString[;secure]]]]
 	Because of the way that document.cookie behaves, writing this here is equivalent to writing
 	document.cookie = whatIAmWritingNow + "; " + document.cookie; */
-	document.cookie = escape(cookieName) + "=" + escape(cookieValue) + (lifeTime ? ";expires=" + (new Date((new Date()).getTime() + (1000 * lifeTime))).toGMTString() : "") + (path ? ";path=" + path : "") + (domain ? ";domain=" + domain : "") + (isSecure ? ";secure" : "");
+	document.cookie = escape(cookieName) + "=" + escape(cookieValue) + (lifeTime ? ";expires=" + (new Date((new Date()).getTime() + (1000 * lifeTime))).toGMTString() : "") + (path ? ";path=" + path : "") + (domain ? ";domain=" + domain : "") + (isSecure ? ";secure" : "") + "; SameSite=Strict";
 	//check if the cookie has been set/deleted as required
 	if ( lifeTime < 0 )
 	{
@@ -338,51 +224,13 @@ function selectionner_liste(IdListe)
 		IdListe.options[i].selected = true;
 	}
 }
-/*-----MAJ Loïs THOMAS  --> Fonctions qui permettent de cacher et afficher le menu à gauche -----*/
-function divaffiche(month_all2)
-{
-	var Nbr = month_all2;
-	if ( Nbr == 1)
-	{
-		document.getElementById("menuGaucheMonthAll2").style.display = "inline-block";
-		// document.getElementById("planningMonthAll2").style.marginLeft = "300px";
-		// document.getElementById("planning").style.width = "75%";
-        document.getElementById("planning").style.width = "auto";
-        document.getElementById("planningMonthAll2").style.width = "auto";
-	}
-	else
-	{
-		document.getElementById("menuGauche").style.display = "block";
-		// document.getElementById("planning").style.marginLeft = "300px";
-		document.getElementById("planning").style.width = "auto";
-	}
-	document.getElementById("cacher").style.display = "inline";
-	document.getElementById("voir").style.display = "none";
-}
-function divcache(month_all2)
-{
-	var Nbr = month_all2;
-	if (Nbr == 1)
-	{
-		document.getElementById("menuGaucheMonthAll2").style.display = "none";
-		document.getElementById("planningMonthAll2").style.marginLeft = "0px";
-		document.getElementById("planningMonthAll2").style.width = "133%";
-	}
-	else
-	{
-		document.getElementById("menuGauche").style.display = "none";
-		document.getElementById("planning").style.marginLeft = "0px";
-		document.getElementById("planning").style.width = "auto";
-	}
-	document.getElementById("cacher").style.display = "none";
-	document.getElementById("voir").style.display = "inline";
-}
 function afficherMoisSemaine(a)
 {
 	var Nb = a;
 	document.getElementById('afficherBoutonSelection'+Nb).style.display = "none";
 	document.getElementById('cacherBoutonSelection'+Nb).style.display = "inline";
 	document.getElementById('boutonSelection'+Nb).style.display = "inline";
+    $('.floatthead').floatThead('reflow');
 }
 function cacherMoisSemaine(a)
 {
@@ -390,6 +238,7 @@ function cacherMoisSemaine(a)
 	document.getElementById('cacherBoutonSelection'+Nb).style.display = "none";
 	document.getElementById('afficherBoutonSelection'+Nb).style.display = "inline";
 	document.getElementById('boutonSelection'+Nb).style.display = "none";
+    $('.floatthead').floatThead('reflow');
 }
 
 function charger(){
@@ -397,43 +246,93 @@ function charger(){
 	test.style.display = 'Block';
 }
 
-function cacherMenuGauche(){
-    document.getElementById("menuGauche2").style.display = "none";
-    document.getElementById("planning2").style.width = "100%";
-    document.getElementById("cacher").style.display = "none";
-	document.getElementById("voir").style.display = "inline";
-}
-
-function afficherMenuGauche(){
-    document.getElementById("menuGauche2").style.display = "inline-block";
-    document.getElementById("planning2").style.width = "75%";
-    document.getElementById("cacher").style.display = "inline";
-	document.getElementById("voir").style.display = "none";
-}
-
-function afficheMenuGauche(mode){
-    if (mode == 0) /* menu caché */
+/*
+* Affichage du menu à gauche ou en haut
+* Paramètre mode: 0 = menu caché; 1 menu à gauche; 2 menu en haut
+*/
+function afficheMenuHG(mode){
+    var w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+    var menuGw,planningw,realmode;
+    if (w < 992){
+        realmode = 2;
+    }
+    else if (w < 1240){
+        realmode = mode;
+        menuGw = "25%";
+        planningw = "75%";
+    }
+    else {
+        realmode = mode;
+        menuGw = "20%";
+        planningw = "80%";
+    }
+    if (mode == 0) /* menus cachés */
     {
+        document.getElementById("menuHaut").style.display = "none";
         document.getElementById("menuGauche2").style.display = "none";
         document.getElementById("planning2").style.width = "100%";
         document.getElementById("cacher").style.display = "none";
-        document.getElementById("voir").style.display = "inline";
+        document.getElementById("voir").style.display = "inline-block";
+        $('.floatthead').floatThead('reflow');
     }
-    else if (mode == 1) /* menu affiché */
+    else if (mode == 1) /* menu affiché à gauche*/
     {
+        document.getElementById("menuHaut").style.display = "none";
         document.getElementById("menuGauche2").style.display = "inline-block";
-        document.getElementById("planning2").style.width = "75%";
-        document.getElementById("cacher").style.display = "inline";
+        document.getElementById("menuGauche2").style.width = menuGw;
+        document.getElementById("planning2").style.width = planningw;
+        document.getElementById("cacher").style.display = "inline-block";
         document.getElementById("voir").style.display = "none";
+        $('.floatthead').floatThead('reflow');
     }
-    else if (mode == 2) /* menu en haut */
+    else if (mode == 2) /* menu affiché en haut */
     {
-        document.getElementById("menuGauche2").style.display = "inline-block";
-        document.getElementById("menuGauche2").style.maxWidth = "100%";
-        document.getElementById("menuGauche2").style.minWidth = "100%";
+        document.getElementById("menuHaut").style.display = "inline-block";
+        document.getElementById("menuGauche2").style.display = "none";
         document.getElementById("planning2").style.display = "inline-block";
         document.getElementById("planning2").style.width = "100%";
-        document.getElementById("cacher").style.display = "inline";
+        document.getElementById("cacher").style.display = "inline-block";
         document.getElementById("voir").style.display = "none";
+        $('.floatthead').floatThead('reflow');
     }
 }
+
+/*
+ *Fonction permettant l'ouverture d'un PopUP de la page view entry.php pour création d'un pdf
+ */
+function lienPDF(id) {
+    var myWindow = window.open("app.php?p=pdfgenerator&id="+id+"", "_blank", "width=960");
+}
+/*
+ * Fonction faisant basculer l'affichage d'un div de display:inline-block à display:none
+ */
+function toggle_visibility(id) {
+	var e = document.getElementById(id);
+	if(e.style.display == 'none')
+	   e.style.display = 'inline-block';
+	else
+	   e.style.display = 'none';
+ }
+
+/*
+ *Fonctions permettant la gestion de l'upload de fichier dans les réservations
+ */
+function getfile(){
+    var el = document.getElementById('hiddenfile');
+    if(el) el.click();
+}
+function getvalue(){
+    var hidden = document.getElementById('hiddenfile');
+    var sel = document.getElementById('selectedfile');
+    if(hidden && sel) sel.value = hidden.value;
+}
+function getvalue2(){
+    var hidden = document.getElementById('hiddenfile');
+    var sel = document.getElementById('selectedfile');
+    if(hidden && sel) hidden.value = sel.value;
+}
+
+ /*
+ *Menu*
+ */
+ function setCookie(e,t,n){var r=new Date;r.setDate(r.getDate()+n);var i=escape(t)+(n==null?"":"; expires="+r.toUTCString());document.cookie=e+"="+i}function getCookie(e){var t,n,r,i=document.cookie.split(";");for(t=0;t<i.length;t++){n=i[t].substr(0,i[t].indexOf("="));r=i[t].substr(i[t].indexOf("=")+1);n=n.replace(/^\s+|\s+$/g,"");if(n==e){return unescape(r)}}}$(document).ready(function(){$("#open").click(function(){var e=$("div#panel").is(":hidden");if(e)$("div#panel").show("slow");else $("div#panel").hide("slow");setCookie("open",e,365)});var e=getCookie("open");if(e=="true"){$("div#panel").show()}else{$("div#panel").hide()}})
